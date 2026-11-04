@@ -86,8 +86,9 @@ nav a.btn{padding:13px 22px}
 .details div{display:flex;flex-direction:column;gap:4px}
 .details span{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .details a{font-weight:600}
-form{flex:1 1 440px;min-width:0;background:#fff;border-radius:24px;padding:36px;display:flex;flex-direction:column;gap:20px}
+form{position:relative;flex:1 1 440px;min-width:0;background:#fff;border-radius:24px;padding:36px;display:flex;flex-direction:column;gap:20px}
 .field{display:flex;flex-direction:column;gap:8px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 label{font-size:15px;font-weight:600}
 input,select,textarea{border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:16px;color:var(--slate);background:#fff}
 input,select{height:50px;padding:0 16px}
@@ -95,6 +96,9 @@ textarea{padding:14px 16px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--coral);outline-offset:1px;border-color:var(--slate)}
 button{align-self:flex-start;min-height:52px;border:0;background:var(--slate);color:#fff;padding:0 30px;border-radius:999px;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer}
 button:hover{background:#2D3848}
+button:disabled{opacity:.6;cursor:default}
+.form-status{font-size:15px;line-height:1.5;color:var(--body);min-height:1.5em}
+.form-status.ok{color:#1E7A46}.form-status.err{color:#B3261E}
 
 footer .wrap{padding-top:56px;padding-bottom:56px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px 48px}
 footer .logo span{font-size:44px}footer .logo i{width:10px;height:10px}
@@ -201,10 +205,11 @@ footer .legal{display:flex;flex-direction:column;gap:6px;font-size:14px;line-hei
           <div><span>LinkedIn</span><a href="https://www.linkedin.com/company/21054930/" target="_blank" rel="noopener">Commerce Property Group</a></div>
         </div>
       </div>
-      <!-- CONTACT FORM: set action to your form handler (see INSTRUCTIONS.txt) -->
-      <form action="[FORM HANDLER URL]" method="POST">
-        <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="name" required></div>
-        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+      <!-- CONTACT FORM: posts to /api/contact, handled by the Cloudflare Worker (Email Service send_email binding) -->
+      <form id="contact-form" action="/api/contact" method="POST">
+        <div class="hp" aria-hidden="true"><label for="company">Company</label><input id="company" name="company" type="text" tabindex="-1" autocomplete="off"></div>
+        <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="name" maxlength="200" required></div>
+        <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
         <div class="field"><label for="topic">I'm getting in touch about</label>
           <select id="topic" name="topic">
             <option>Renting space</option>
@@ -213,8 +218,9 @@ footer .legal{display:flex;flex-direction:column;gap:6px;font-size:14px;line-hei
             <option>Something else</option>
           </select>
         </div>
-        <div class="field"><label for="message">Message</label><textarea id="message" name="message" rows="4" required></textarea></div>
+        <div class="field"><label for="message">Message</label><textarea id="message" name="message" rows="4" maxlength="5000" required></textarea></div>
         <button type="submit">Send message</button>
+        <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
       </form>
     </div>
   </section>
@@ -229,6 +235,25 @@ footer .legal{display:flex;flex-direction:column;gap:6px;font-size:14px;line-hei
     </div>
   </div>
 </footer>
-<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+(function(){
+  var f=document.getElementById('contact-form'),s=document.getElementById('form-status');
+  var OK="Thanks, we've got your message and will be in touch soon.";
+  var ERR="Sorry, that didn't send. Please email info@commerce-group.co.uk instead.";
+  function show(msg,cls){s.textContent=msg;s.className='form-status '+cls;}
+  // Fallback for when JavaScript-free submissions redirect back with ?sent=1 or ?sent=0
+  var sent=new URLSearchParams(location.search).get('sent');
+  if(sent==='1')show(OK,'ok');else if(sent==='0')show(ERR,'err');
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var b=f.querySelector('button');b.disabled=true;show('Sending…','');
+    fetch(f.action,{method:'POST',body:new FormData(f),headers:{Accept:'application/json'}})
+      .then(function(r){if(!r.ok)throw new Error(r.status);f.reset();show(OK,'ok');})
+      .catch(function(){show(ERR,'err');})
+      .finally(function(){b.disabled=false;});
+  });
+})();
+</script>
 </body>
 </html>
