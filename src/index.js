@@ -13,7 +13,7 @@ async function handleContact(request, env) {
     ? Response.json({ ok }, { status })
     : Response.redirect(new URL(ok ? "/?sent=1#contact" : "/?sent=0#contact", request.url), 303);
   const d = await request.formData();
-  if (d.get("company")) return reply(true);
+  if (d.get("hp_field")) return reply(true);
   const name = String(d.get("name") || "").trim().slice(0, 200);
   const email = String(d.get("email") || "").trim().slice(0, 200);
   const topic = String(d.get("topic") || "Not given").trim().slice(0, 100);
