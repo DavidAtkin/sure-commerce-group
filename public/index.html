@@ -207,7 +207,7 @@ footer .legal{display:flex;flex-direction:column;gap:6px;font-size:14px;line-hei
       </div>
       <!-- CONTACT FORM: posts to /api/contact, handled by the Cloudflare Worker (Email Service send_email binding) -->
       <form id="contact-form" action="/api/contact" method="POST">
-        <div class="hp" aria-hidden="true"><label for="company">Company</label><input id="company" name="company" type="text" tabindex="-1" autocomplete="off"></div>
+        <div class="hp" aria-hidden="true"><label for="hp_field">Leave this empty</label><input id="hp_field" name="hp_field" type="text" tabindex="-1" autocomplete="new-password"></div>
         <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="name" maxlength="200" required></div>
         <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" maxlength="200" required></div>
         <div class="field"><label for="topic">I'm getting in touch about</label>
